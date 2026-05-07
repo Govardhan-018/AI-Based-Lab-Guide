@@ -56,6 +56,8 @@ class StartScreen(ctk.CTkFrame):
         grid_frame.pack(pady=Spacing.XL)
 
         self.experiment_var = ctk.StringVar(value="nacl_exp.json")
+        self.experiment_var.trace_add("write", self._update_selection_ui)
+        self.cards = {}
 
         experiments = [
             ("⚗️  Synthesis of Copper Sulfate", "copper_sulfate_exp.json", "Medium • ~30 min"),
@@ -69,15 +71,23 @@ class StartScreen(ctk.CTkFrame):
             row = i // 2
             col = i % 2
 
+            # Selection handler for entire card
+            def select_exp(f=exp_file):
+                self.experiment_var.set(f)
+
             # Experiment card - large and outlined
             exp_card = ctk.CTkFrame(
                 grid_frame,
                 **ThemeConfig.get_experiment_card_style(),
                 width=280,
                 height=120,
+                cursor="hand2"
             )
             exp_card.grid(row=row, column=col, padx=Spacing.LG, pady=Spacing.LG)
-            exp_card.pack_propagate(False)  # Maintain fixed size
+            exp_card.pack_propagate(False)
+            exp_card.bind("<Button-1>", lambda e, f=exp_file: select_exp(f))
+            
+            self.cards[exp_file] = exp_card
 
             # Radio button inside card
             radio = ctk.CTkRadioButton(
@@ -85,12 +95,13 @@ class StartScreen(ctk.CTkFrame):
                 text="",
                 variable=self.experiment_var,
                 value=exp_file,
-                radiobutton_width=24,
-                radiobutton_height=24,
+                radiobutton_width=20,
+                radiobutton_height=20,
                 border_width_unchecked=2,
-                border_width_checked=2,
-                fg_color=Colors.ACTIVE_GLOW,
-                command=lambda f=exp_file: self._on_experiment_selected(f),
+                border_width_checked=6,
+                fg_color=Colors.PRIMARY_TEXT, # Black dot
+                border_color=Colors.BORDER,    # Black border
+                hover_color=Colors.TERTIARY_BG,
             )
             radio.pack(anchor="nw", padx=Spacing.LG, pady=Spacing.LG)
 
@@ -102,8 +113,10 @@ class StartScreen(ctk.CTkFrame):
                 text_color=Colors.PRIMARY_TEXT,
                 wraplength=220,
                 justify="left",
+                cursor="hand2"
             )
             name_label.pack(anchor="w", padx=Spacing.LG, pady=(Spacing.SM, 0))
+            name_label.bind("<Button-1>", lambda e, f=exp_file: select_exp(f))
 
             # Difficulty and duration
             diff_label = ctk.CTkLabel(
@@ -111,8 +124,10 @@ class StartScreen(ctk.CTkFrame):
                 text=difficulty,
                 font=Typography.SMALL,
                 text_color=Colors.TERTIARY_TEXT,
+                cursor="hand2"
             )
             diff_label.pack(anchor="sw", padx=Spacing.LG, pady=Spacing.LG)
+            diff_label.bind("<Button-1>", lambda e, f=exp_file: select_exp(f))
 
         # ---- Start Button ----
         self.start_btn = ctk.CTkButton(
@@ -137,3 +152,16 @@ class StartScreen(ctk.CTkFrame):
     def _start(self):
         exp_file = self.experiment_var.get()
         self._on_experiment_selected(exp_file)
+
+    def _update_selection_ui(self, *args):
+        """Highlight the selected card visually."""
+        selected = self.experiment_var.get()
+        for exp_file, card in self.cards.items():
+            if exp_file == selected:
+                card.configure(border_width=3, border_color=Colors.PRIMARY_TEXT)
+            else:
+                card.configure(border_width=1, border_color=Colors.BORDER)
+
+    def on_screen_enter(self):
+        """Ensure UI matches initial state."""
+        self._update_selection_ui()
