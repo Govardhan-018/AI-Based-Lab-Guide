@@ -35,13 +35,25 @@ def test_initialization():
     app._on_core_ready(mock_loading)
     print("Core initialized. Experiment screen shown.")
     
-    # Open assistant
-    app._open_assistant()
-    print("Assistant opened.")
+    # Test Back Button on Overview
+    app._screens["overview"]._on_back()
+    print("Back to Start from Overview tested.")
     
-    # Back to experiment
-    app._close_assistant()
-    print("Assistant closed.")
+    # Select experiment again
+    app._on_experiment_selected("nacl_exp.json")
+    app._on_core_ready(None)
+    
+    # Test Pause/Resume on Experiment Screen
+    exp_screen = app._screens["experiment"]
+    exp_screen._handle_pause()
+    print("Pause button tested.")
+    
+    exp_screen._handle_resume()
+    print("Resume button tested.")
+    
+    # Test Back on Experiment Screen
+    exp_screen._on_back()
+    print("Back to Overview from Experiment tested.")
     
     print("ALL UI TESTS PASSED.")
 

@@ -95,6 +95,7 @@ class SenseBridgeApp(ctk.CTk):
         self._screens["overview"] = OverviewScreen(
             self,
             on_start_experiment=self._on_start_experiment,
+            on_back=self._on_back_to_start,
             on_speak=self._on_overview_speak,
         )
 
@@ -102,6 +103,10 @@ class SenseBridgeApp(ctk.CTk):
 
     def show_screen(self, name: str):
         """Switch to the specified screen using pack/forget (preserves state)."""
+        # STOP all speech when switching screens as per user request
+        if self.audio_pipeline:
+            self.audio_pipeline.stop_speaking()
+
         # Hide current screen
         if self._current_screen and self._current_screen in self._screens:
             screen = self._screens[self._current_screen]
@@ -120,6 +125,40 @@ class SenseBridgeApp(ctk.CTk):
             # Notify screen it's entering
             if hasattr(screen, 'on_screen_enter'):
                 screen.on_screen_enter()
+
+    # ================================================================
+    # NAVIGATION HANDLERS
+    # ================================================================
+
+    def _on_back_to_start(self):
+        """Navigate back to the main experiment selection screen."""
+        self.show_screen("start")
+
+    def _on_back_to_overview(self):
+        """Navigate back to the experiment overview screen."""
+        self.show_screen("overview")
+
+    def _on_pause_experiment(self):
+        """Handle experiment pause."""
+        print("[App] Experiment paused.")
+        if self.session.cv_monitor:
+            self.session.cv_monitor.stop() # Stop camera and processing
+        if self.audio_pipeline:
+            self.audio_pipeline.stop_speaking()
+        self.session.paused = True
+
+    def _on_resume_experiment(self):
+        """Handle experiment resume."""
+        print("[App] Experiment resumed.")
+        self.session.paused = False
+        if self.session.cv_monitor:
+            self.session.cv_monitor.start(callback=self._on_step_complete_cv)
+        
+        # Optionally repeat current instruction
+        exp_mgr = self.session.experiment_manager
+        if exp_mgr and self.audio_pipeline:
+            instruction = exp_mgr.get_instruction()
+            self.audio_pipeline.speak(f"Resuming. Your current task is: {instruction}")
 
     # ================================================================
     # SCREEN FLOW
@@ -155,7 +194,7 @@ class SenseBridgeApp(ctk.CTk):
             self,
             text="⚡ Initializing AI Core & Camera...\nPlease wait",
             font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#60A5FA",
+            text_color=Colors.PRIMARY_TEXT,
         )
         self._screens["overview"].pack_forget()
         self._active_loading_widget.pack(expand=True)
@@ -206,6 +245,9 @@ class SenseBridgeApp(ctk.CTk):
         self._screens["experiment"] = ExperimentScreen(
             self,
             session_manager=self.session,
+            on_back=self._on_back_to_overview,
+            on_pause=self._on_pause_experiment,
+            on_resume=self._on_resume_experiment,
             on_open_assistant=self._open_assistant,
         )
 

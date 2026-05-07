@@ -1,15 +1,8 @@
 """
-AssistantScreen — Full conversational AI voice assistant interface.
+AssistantScreen — AI Lab Assistant Interface.
 
-Premium monochrome minimalist design with real-time AI guidance.
-
-Features:
-- Scrollable chat history with styled bubbles
-- Experiment context panel
-- Voice button with white glow animations
-- Text input fallback
-- Streaming AI responses with live typing effect
-- Persistent conversation memory
+Ultra-minimal conversational AI interface.
+Pure white background with black elements only.
 """
 
 import threading
@@ -17,13 +10,13 @@ import time
 import customtkinter as ctk
 
 from core.voice_state_manager import VoiceState
-from ui.design_system import Colors, Typography, Spacing, Dimensions, BorderRadius, Animations, get_hover_color
+from ui.design_system import Colors, Typography, Spacing, Dimensions, BorderRadius, ThemeConfig
 from ui.widgets.chat_bubble import ChatBubble, TypingIndicator
 from ui.widgets.voice_button import VoiceButton
 
 
 class AssistantScreen(ctk.CTkFrame):
-    """Full-screen AI assistant with chat interface and voice support."""
+    """Clean AI assistant interface with chat and voice support."""
 
     def __init__(self, parent, session_manager, ai_engine, audio_pipeline, on_back, on_reset_experiment=None, **kwargs):
         super().__init__(parent, **kwargs)
@@ -40,7 +33,7 @@ class AssistantScreen(ctk.CTkFrame):
         self._chat_widgets = []  # Keep references to prevent GC
 
         self._build_ui()
-        
+
         if self.audio_pipeline:
             self.audio_pipeline.vsm.on_state_change(self._on_vsm_state_change)
 
@@ -51,9 +44,7 @@ class AssistantScreen(ctk.CTkFrame):
     def _build_ui(self):
         """Build the assistant screen layout."""
 
-        # ================================================================
-        # TOP NAVIGATION BAR
-        # ================================================================
+        # ---- Top Navigation Bar ----
         top_bar = ctk.CTkFrame(
             self,
             fg_color=Colors.TOP_NAV_BG,
@@ -72,12 +63,7 @@ class AssistantScreen(ctk.CTkFrame):
             font=Typography.BODY_BOLD,
             width=80,
             height=Dimensions.BUTTON_HEIGHT_MD,
-            corner_radius=BorderRadius.MEDIUM,
-            fg_color=Colors.TERTIARY_BG,
-            border_color=Colors.BORDER,
-            border_width=1,
-            hover_color=Colors.BUTTON_HOVER_BG,
-            text_color=Colors.PRIMARY_TEXT,
+            **ThemeConfig.get_button_style(),
             command=self._handle_back,
         )
         back_btn.pack(side="left", padx=Spacing.XL, pady=Spacing.LG)
@@ -91,104 +77,15 @@ class AssistantScreen(ctk.CTkFrame):
         )
         title.pack(side="left", padx=Spacing.XL)
 
-        # Experiment context badge
-        self.context_badge = ctk.CTkLabel(
-            top_bar,
-            text="",
-            font=Typography.SMALL_BOLD,
-            text_color=Colors.PRIMARY_TEXT,
-            fg_color=Colors.SECONDARY_BG,
-            corner_radius=BorderRadius.SMALL,
-        )
-        self.context_badge.pack(side="right", padx=Spacing.XL, pady=Spacing.LG)
-
-        # ================================================================
-        # MAIN AREA — Chat + Context Panel
-        # ================================================================
-        main_area = ctk.CTkFrame(self, fg_color="transparent")
-        main_area.pack(expand=True, fill="both", padx=0, pady=0)
-
-        # ---- Right Context Panel ----
-        self.context_panel = ctk.CTkFrame(
-            main_area,
-            fg_color=Colors.RIGHT_PANEL_BG,
-            width=Dimensions.RIGHT_PANEL_WIDTH,
-            corner_radius=0,
-            border_color=Colors.BORDER,
-            border_width=1
-        )
-        self.context_panel.pack(side="right", fill="y", padx=0, pady=0)
-        self.context_panel.pack_propagate(False)
-
-        ctx_title = ctk.CTkLabel(
-            self.context_panel,
-            text="📋 Context",
-            font=Typography.SECTION_TITLE,
-            text_color=Colors.PRIMARY_TEXT,
-        )
-        ctx_title.pack(padx=Spacing.LG, pady=(Spacing.LG, Spacing.MD))
-
-        self.ctx_experiment_label = ctk.CTkLabel(
-            self.context_panel,
-            text="",
-            font=Typography.BODY_SMALL,
-            text_color=Colors.SECONDARY_TEXT,
-            wraplength=Dimensions.RIGHT_PANEL_WIDTH - 32,
-            justify="left",
-            anchor="w",
-        )
-        self.ctx_experiment_label.pack(fill="x", padx=Spacing.LG, pady=Spacing.SM)
-
-        ctx_step_title = ctk.CTkLabel(
-            self.context_panel,
-            text="Current Step:",
-            font=Typography.BODY_BOLD,
-            text_color=Colors.PRIMARY_TEXT,
-            anchor="w",
-        )
-        ctx_step_title.pack(fill="x", padx=Spacing.LG, pady=(Spacing.LG, Spacing.SM))
-
-        self.ctx_step_label = ctk.CTkLabel(
-            self.context_panel,
-            text="",
-            font=Typography.BODY_SMALL,
-            text_color=Colors.SECONDARY_TEXT,
-            wraplength=Dimensions.RIGHT_PANEL_WIDTH - 32,
-            justify="left",
-            anchor="w",
-        )
-        self.ctx_step_label.pack(fill="x", padx=Spacing.LG, pady=Spacing.SM)
-
-        # Hints section
-        ctx_hints_title = ctk.CTkLabel(
-            self.context_panel,
-            text="💡 Tips:",
-            font=Typography.BODY_BOLD,
-            text_color=Colors.PRIMARY_TEXT,
-            anchor="w",
-        )
-        ctx_hints_title.pack(fill="x", padx=Spacing.LG, pady=(Spacing.LG, Spacing.SM))
-
-        self.ctx_hints_label = ctk.CTkLabel(
-            self.context_panel,
-            text="",
-            font=Typography.BODY_SMALL,
-            text_color=Colors.TERTIARY_TEXT,
-            wraplength=Dimensions.RIGHT_PANEL_WIDTH - 32,
-            justify="left",
-            anchor="w",
-        )
-        self.ctx_hints_label.pack(fill="x", padx=Spacing.LG, pady=Spacing.SM)
-
-        # ---- Chat Area (scrollable) ----
+        # ---- Chat Area ----
         self.chat_scroll = ctk.CTkScrollableFrame(
-            main_area,
+            self,
             fg_color=Colors.PRIMARY_BG,
             corner_radius=0,
         )
-        self.chat_scroll.pack(side="left", expand=True, fill="both")
+        self.chat_scroll.pack(expand=True, fill="both")
 
-        # Welcome message placeholder
+        # Welcome message
         self._welcome_label = ctk.CTkLabel(
             self.chat_scroll,
             text="👋 Welcome to SenseBridge AI\n\nAsk me anything about the experiment",
@@ -198,56 +95,48 @@ class AssistantScreen(ctk.CTkFrame):
         )
         self._welcome_label.pack(expand=True, pady=Spacing.XXXL)
 
-        # ================================================================
-        # BOTTOM CONTROL BAR
-        # ================================================================
-        bottom_bar = ctk.CTkFrame(
+        # ---- Bottom Input Area ----
+        bottom_frame = ctk.CTkFrame(
             self,
-            fg_color=Colors.SECONDARY_BG,
+            fg_color=Colors.PRIMARY_BG,
             corner_radius=0,
             border_color=Colors.BORDER,
             border_width=1
         )
-        bottom_bar.pack(fill="x")
+        bottom_frame.pack(fill="x")
 
-        # Text input area
-        input_frame = ctk.CTkFrame(bottom_bar, fg_color="transparent")
-        input_frame.pack(fill="x", padx=Spacing.XL, pady=(Spacing.LG, Spacing.SM))
+        # Input container
+        input_container = ctk.CTkFrame(bottom_frame, fg_color="transparent")
+        input_container.pack(fill="x", padx=Spacing.XL, pady=Spacing.LG)
 
+        # Text input
         self.text_input = ctk.CTkEntry(
-            input_frame,
+            input_container,
             placeholder_text="Type a message...",
             font=Typography.BODY,
             height=Dimensions.BUTTON_HEIGHT_LG,
-            corner_radius=BorderRadius.MEDIUM,
-            fg_color=Colors.INPUT_BG,
-            border_color=Colors.INPUT_BORDER,
-            border_width=1,
-            text_color=Colors.INPUT_TEXT,
-            placeholder_text_color=Colors.INPUT_PLACEHOLDER,
+            **ThemeConfig.get_input_style(),
         )
         self.text_input.pack(side="left", expand=True, fill="x", padx=(0, Spacing.MD))
         self.text_input.bind("<Return>", self._on_text_submit)
 
+        # Send button
         self.send_btn = ctk.CTkButton(
-            input_frame,
+            input_container,
             text="Send",
             font=Typography.BODY_BOLD,
             width=90,
             height=Dimensions.BUTTON_HEIGHT_LG,
-            corner_radius=BorderRadius.MEDIUM,
-            fg_color=Colors.BUTTON_PRIMARY_BG,
-            hover_color=get_hover_color(Colors.BUTTON_PRIMARY_BG, lighten=False),
-            text_color=Colors.BUTTON_PRIMARY_TEXT,
+            **ThemeConfig.get_button_style("primary"),
             command=self._on_send_click,
         )
         self.send_btn.pack(side="right")
 
-        # Voice button area
-        voice_frame = ctk.CTkFrame(bottom_bar, fg_color="transparent")
-        voice_frame.pack(pady=(Spacing.SM, Spacing.LG))
+        # Voice button
+        voice_container = ctk.CTkFrame(bottom_frame, fg_color="transparent")
+        voice_container.pack(pady=(0, Spacing.LG))
 
-        self.voice_button = VoiceButton(voice_frame, command=self._on_voice_toggle)
+        self.voice_button = VoiceButton(voice_container, command=self._on_voice_toggle)
         self.voice_button.pack()
 
     # ================================================================
@@ -256,39 +145,11 @@ class AssistantScreen(ctk.CTkFrame):
 
     def on_screen_enter(self):
         """Called when the assistant screen becomes visible."""
-        self._update_context_panel()
         self._restore_chat_history()
 
     def on_screen_leave(self):
         """Called when leaving the assistant screen."""
         pass  # State is preserved automatically
-
-    # ================================================================
-    # CONTEXT PANEL
-    # ================================================================
-
-    def _update_context_panel(self):
-        """Update the experiment context panel with current state."""
-        exp_mgr = self.session.experiment_manager
-        if not exp_mgr or not exp_mgr.exp_data:
-            self.context_badge.configure(text="  No experiment  ")
-            return
-
-        title = exp_mgr.exp_data.get("title", "Unknown")
-        self.context_badge.configure(text=f"  🧪 {title}  ")
-        self.ctx_experiment_label.configure(text=title)
-
-        step = exp_mgr.get_current_step()
-        if step:
-            current, total = exp_mgr.get_progress()
-            self.ctx_step_label.configure(
-                text=f"({current}/{total}) {step.get('instruction', '')}"
-            )
-            hints = step.get("hints", [])
-            self.ctx_hints_label.configure(text="\n".join(f"• {h}" for h in hints) if hints else "No hints")
-        else:
-            self.ctx_step_label.configure(text="Experiment complete!")
-            self.ctx_hints_label.configure(text="")
 
     # ================================================================
     # CHAT HISTORY
@@ -301,7 +162,7 @@ class AssistantScreen(ctk.CTkFrame):
         if not history:
             # Show welcome message
             if self._welcome_label:
-                self._welcome_label.pack(expand=True, pady=80)
+                self._welcome_label.pack(expand=True, pady=Spacing.XXXL)
             return
 
         # Hide welcome
@@ -326,7 +187,7 @@ class AssistantScreen(ctk.CTkFrame):
             content=content,
             timestamp=timestamp,
         )
-        bubble.pack(fill="x")
+        bubble.pack(fill="x", padx=Spacing.XL, pady=Spacing.SM)
         self._chat_widgets.append(bubble)
 
         # Auto-scroll to bottom
@@ -339,7 +200,7 @@ class AssistantScreen(ctk.CTkFrame):
         if self._typing_indicator:
             return
         self._typing_indicator = TypingIndicator(self.chat_scroll)
-        self._typing_indicator.pack(fill="x")
+        self._typing_indicator.pack(fill="x", padx=Spacing.XL, pady=Spacing.SM)
         self.after(50, lambda: self.chat_scroll._parent_canvas.yview_moveto(1.0))
 
     def _hide_typing_indicator(self):
@@ -445,7 +306,7 @@ class AssistantScreen(ctk.CTkFrame):
         finally:
             # Re-enable input
             self.after(0, self._re_enable_input)
-            
+
             # If no speech was generated or an error occurred, we might be stuck in PROCESSING
             if self.audio_pipeline and self.audio_pipeline.vsm.is_processing():
                 self.audio_pipeline.vsm.transition(VoiceState.IDLE)

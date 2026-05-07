@@ -1,8 +1,7 @@
 """
 ChatBubble — Styled message bubble widget for the AI assistant chat.
 
-Renders user messages and assistant messages with monochrome premium styling.
-Follows SenseBridge design system for smooth, professional appearance.
+Ultra-minimal monochrome design with white background and black elements.
 """
 
 import time
@@ -11,15 +10,15 @@ from ui.design_system import Colors, Typography, Spacing, BorderRadius
 
 
 class ChatBubble(ctk.CTkFrame):
-    """A styled chat message bubble with premium monochrome design."""
+    """A styled chat message bubble with ultra-minimal design."""
 
-    # Monochrome color palette from design system
-    USER_BG = Colors.CHAT_USER_BG           # #1C1C1C
-    USER_TEXT = Colors.CHAT_USER_TEXT       # #FFFFFF
-    ASSISTANT_BG = Colors.CHAT_AI_BG        # #111111
-    ASSISTANT_TEXT = Colors.CHAT_AI_TEXT    # #EAEAEA
-    ASSISTANT_BORDER = Colors.CHAT_AI_BORDER  # #222222
-    TIMESTAMP_COLOR = Colors.SECONDARY_TEXT # #B3B3B3
+    # Ultra-minimal color palette - white backgrounds, black text
+    USER_BG = Colors.CHAT_USER_BG           # #FFFFFF (white)
+    USER_TEXT = Colors.CHAT_USER_TEXT       # #000000 (black)
+    ASSISTANT_BG = Colors.CHAT_AI_BG        # #000000 (black)
+    ASSISTANT_TEXT = Colors.CHAT_AI_TEXT    # #FFFFFF (white)
+    ASSISTANT_BORDER = Colors.CHAT_AI_BORDER  # #000000 (black)
+    TIMESTAMP_COLOR = Colors.SECONDARY_TEXT # #00000099 (black with 60% opacity)
 
     def __init__(self, parent, role: str, content: str, timestamp: float = None, **kwargs):
         super().__init__(parent, **kwargs)
@@ -56,13 +55,10 @@ class ChatBubble(ctk.CTkFrame):
         bubble_config = {
             "fg_color": bubble_bg,
             "corner_radius": BorderRadius.LARGE,
+            "border_color": Colors.BORDER,
+            "border_width": 1,
         }
-        
-        # Add subtle border for AI messages
-        if not is_user:
-            bubble_config["border_color"] = self.ASSISTANT_BORDER
-            bubble_config["border_width"] = 1
-        
+
         self.bubble_frame = ctk.CTkFrame(self, **bubble_config)
 
         if is_user:
@@ -100,25 +96,31 @@ class ChatBubble(ctk.CTkFrame):
 
 
 class TypingIndicator(ctk.CTkFrame):
-    """Animated typing indicator (three pulsing dots)."""
+    """Animated typing indicator (three pulsing dots) - ultra-minimal design."""
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.configure(fg_color="transparent")
 
-        self._dots_frame = ctk.CTkFrame(self, fg_color="#374151", corner_radius=16)
-        self._dots_frame.pack(anchor="w", padx=(20, 80), pady=(4, 4))
+        self._dots_frame = ctk.CTkFrame(
+            self,
+            fg_color=Colors.PRIMARY_BG,
+            corner_radius=BorderRadius.LARGE,
+            border_color=Colors.BORDER,
+            border_width=1
+        )
+        self._dots_frame.pack(anchor="w", padx=(Spacing.XL, 80), pady=(Spacing.SM, 0))
 
         self._dot_labels = []
         for i in range(3):
             dot = ctk.CTkLabel(
                 self._dots_frame,
                 text="●",
-                font=ctk.CTkFont(size=16),
-                text_color="#6B7280",
+                font=Typography.BODY,
+                text_color=Colors.SECONDARY_TEXT,
                 width=20,
             )
-            dot.pack(side="left", padx=4, pady=8)
+            dot.pack(side="left", padx=Spacing.SM, pady=Spacing.MD)
             self._dot_labels.append(dot)
 
         self._anim_step = 0
@@ -126,17 +128,18 @@ class TypingIndicator(ctk.CTkFrame):
         self._animate()
 
     def _animate(self):
-        """Animate the dots with a pulsing effect."""
+        """Animate the dots with a subtle pulsing effect."""
         if not self._animating:
             return
 
-        colors = ["#9CA3AF", "#6B7280", "#4B5563"]
+        # Subtle opacity variations using black colors
+        colors = [Colors.SECONDARY_TEXT, Colors.TERTIARY_TEXT, Colors.SECONDARY_TEXT]
         for i, dot in enumerate(self._dot_labels):
             idx = (self._anim_step + i) % len(colors)
             dot.configure(text_color=colors[idx])
 
         self._anim_step += 1
-        self.after(400, self._animate)
+        self.after(500, self._animate)  # Slower, more subtle animation
 
     def destroy(self):
         self._animating = False

@@ -1,8 +1,8 @@
 """
 VoiceButton — Animated microphone button with visual state indicators.
 
-Premium monochrome design with subtle white glow animations.
-Shows different visual states with minimal, scientific aesthetic.
+Ultra-minimal design with white background and black elements.
+Circular button with subtle black glow animations.
 """
 
 import customtkinter as ctk
@@ -11,42 +11,42 @@ from ui.design_system import Colors, Typography, Spacing, Dimensions, BorderRadi
 
 
 class VoiceButton(ctk.CTkFrame):
-    """Animated mic button with premium monochrome design and state indicators."""
+    """Animated mic button with ultra-minimal design and state indicators."""
 
-    # Monochrome state colors (minimal, professional)
+    # Ultra-minimal state colors - white backgrounds, black elements
     STATE_COLORS = {
         VoiceState.IDLE: {
-            "bg": Colors.MIC_IDLE_BG,
-            "border": Colors.MIC_IDLE_BORDER,
+            "bg": Colors.PRIMARY_BG,
+            "border": Colors.BORDER,
             "text": "🎤 Tap to Speak",
             "text_color": Colors.SECONDARY_TEXT,
         },
         VoiceState.LISTENING: {
-            "bg": Colors.MIC_IDLE_BG,
+            "bg": Colors.PRIMARY_BG,
             "border": Colors.ACTIVE_GLOW,
             "text": "🎙️ Listening...",
             "text_color": Colors.PRIMARY_TEXT,
         },
         VoiceState.PROCESSING: {
-            "bg": Colors.MIC_IDLE_BG,
-            "border": Colors.MIC_PROCESSING_GLOW,
+            "bg": Colors.PRIMARY_BG,
+            "border": Colors.TERTIARY_TEXT,
             "text": "🧠 Thinking...",
             "text_color": Colors.SECONDARY_TEXT,
         },
         VoiceState.SPEAKING: {
-            "bg": Colors.MIC_IDLE_BG,
+            "bg": Colors.PRIMARY_BG,
             "border": Colors.ACTIVE_GLOW,
             "text": "🔊 Speaking...",
             "text_color": Colors.PRIMARY_TEXT,
         },
         VoiceState.PAUSED: {
-            "bg": Colors.MIC_IDLE_BG,
-            "border": Colors.MIC_IDLE_BORDER,
+            "bg": Colors.PRIMARY_BG,
+            "border": Colors.BORDER,
             "text": "⏸ Paused",
             "text_color": Colors.SECONDARY_TEXT,
         },
         VoiceState.ERROR: {
-            "bg": Colors.MIC_IDLE_BG,
+            "bg": Colors.PRIMARY_BG,
             "border": Colors.PRIMARY_TEXT,
             "text": "⚠ Error",
             "text_color": Colors.PRIMARY_TEXT,
@@ -62,18 +62,18 @@ class VoiceButton(ctk.CTkFrame):
         self._pulse_active = False
         self._pulse_step = 0
 
-        # Outer glow ring (for animations)
+        # Outer glow ring (for animations) - subtle black glow
         self.glow_frame = ctk.CTkFrame(
             self,
             fg_color="transparent",
             corner_radius=BorderRadius.FULL,
-            width=Dimensions.MIC_BUTTON_SIZE + 12,
-            height=Dimensions.MIC_BUTTON_SIZE + 12,
+            width=Dimensions.MIC_BUTTON_SIZE + 16,
+            height=Dimensions.MIC_BUTTON_SIZE + 16,
         )
         self.glow_frame.pack(pady=(0, Spacing.MD))
         self.glow_frame.pack_propagate(False)
 
-        # Main mic button - premium minimalist design
+        # Main mic button - circular, white with black border
         colors = self.STATE_COLORS[VoiceState.IDLE]
         self.button = ctk.CTkButton(
             self.glow_frame,
@@ -85,7 +85,7 @@ class VoiceButton(ctk.CTkFrame):
             fg_color=colors["bg"],
             border_color=colors["border"],
             border_width=2,
-            hover_color=Colors.TERTIARY_BG,
+            hover_color=Colors.PRIMARY_BG,  # Stay white on hover
             text_color=Colors.PRIMARY_TEXT,
             command=self._on_click,
         )
@@ -136,7 +136,7 @@ class VoiceButton(ctk.CTkFrame):
             self._stop_pulse()
 
     def _start_pulse(self):
-        """Start a pulsing glow animation."""
+        """Start a subtle black glow pulse animation."""
         if self._pulse_active:
             return
         self._pulse_active = True
@@ -149,15 +149,15 @@ class VoiceButton(ctk.CTkFrame):
         self.glow_frame.configure(fg_color="transparent")
 
     def _do_pulse(self):
-        """Execute one step of the pulse animation with white glow."""
+        """Execute one step of the subtle black pulse animation."""
         if not self._pulse_active:
             return
 
-        # Create subtle white glow pulse effect
+        # Create subtle black glow pulse effect
         if self._pulse_step % 2 == 0:
-            # Full glow
+            # Subtle black glow
             self.glow_frame.configure(
-                fg_color=Colors.ACTIVE_GLOW,
+                fg_color=Colors.QUATERNARY_BG,
                 border_width=0
             )
             self.button.configure(border_width=3)
@@ -170,7 +170,7 @@ class VoiceButton(ctk.CTkFrame):
             self.button.configure(border_width=2)
 
         self._pulse_step += 1
-        self.after(600, self._do_pulse)
+        self.after(700, self._do_pulse)  # Slower, more subtle
 
     def set_enabled(self, enabled: bool):
         """Enable or disable the button."""

@@ -59,6 +59,7 @@ class AudioPipeline:
         self.audio_queue: queue.Queue = queue.Queue()
         self.tts_thread: Optional[threading.Thread] = None
         self._tts_done_event = threading.Event()
+        self._stop_speech_flag = False
 
         # Recording state
         self.is_recording = False
@@ -94,19 +95,24 @@ class AudioPipeline:
                 if not text or not text.strip():
                     continue
 
+                # Reset stop flag for new speech item
+                self._stop_speech_flag = False
+
                 # Transition to SPEAKING if possible
                 if not self.vsm.is_speaking():
                     self.vsm.transition(VoiceState.SPEAKING)
 
                 for audio_chunk in self.voice.synthesize(text):
+                    if self._stop_speech_flag:
+                        break
                     stream.write(audio_chunk.audio_int16_bytes)
 
                 # Notify when this sentence is done
-                if callback:
+                if callback and not self._stop_speech_flag:
                     callback()
 
-                # Check if queue is empty — if so, we're done speaking
-                if self.audio_queue.empty():
+                # Check if queue is empty OR if we were stopped — if so, we're done speaking
+                if self.audio_queue.empty() or self._stop_speech_flag:
                     self._tts_done_event.set()
                     # Only go back to IDLE if still in SPEAKING state
                     if self.vsm.is_speaking():
@@ -116,6 +122,23 @@ class AudioPipeline:
             stream.close()
         except Exception as e:
             print(f"[AudioPipeline] TTS Fatal Error: {e}")
+
+    def stop_speaking(self):
+        """Clear the TTS queue and stop current speech synthesis immediately."""
+        self._stop_speech_flag = True
+        
+        # Clear the queue
+        while not self.audio_queue.empty():
+            try:
+                self.audio_queue.get_nowait()
+            except queue.Empty:
+                break
+        
+        # Ensure we transition out of SPEAKING state
+        if self.vsm.is_speaking():
+            self.vsm.transition(VoiceState.IDLE)
+        
+        self._tts_done_event.set()
 
     def speak(self, text: str):
         """Send text to the TTS queue. Splits by sentences for smoother playback."""

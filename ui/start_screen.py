@@ -1,26 +1,31 @@
 """
-StartScreen — Experiment selection screen.
+StartScreen — Experiment Selection Dashboard.
 
-Premium minimalist interface for experiment selection on app launch.
+Ultra-minimal centered dashboard for experiment selection.
+Pure white background with black elements only.
 """
 
 import customtkinter as ctk
-from ui.design_system import Colors, Typography, Spacing, BorderRadius, get_hover_color
+from ui.design_system import Colors, Typography, Spacing, BorderRadius, ThemeConfig
 
 
 class StartScreen(ctk.CTkFrame):
-    """Experiment selection screen shown on app launch."""
+    """Centered experiment selection dashboard."""
 
     def __init__(self, parent, on_experiment_selected, **kwargs):
         super().__init__(parent, **kwargs)
         self.configure(fg_color=Colors.PRIMARY_BG)
         self._on_experiment_selected = on_experiment_selected
 
-        # ---- Header Section ----
-        header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.pack(fill="x", pady=(Spacing.XXXL, Spacing.MD))
+        # Main container - centered layout
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(expand=True, fill="both")
 
-        # Logo / Title
+        # ---- Header Section ----
+        header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        header_frame.pack(pady=(Spacing.XXXL, Spacing.XL))
+
+        # Logo / Title - Large and centered
         title = ctk.CTkLabel(
             header_frame,
             text="🧪 SenseBridge",
@@ -32,23 +37,23 @@ class StartScreen(ctk.CTkFrame):
         subtitle = ctk.CTkLabel(
             header_frame,
             text="AI Laboratory Assistant",
-            font=Typography.SECTION_TITLE,
+            font=Typography.SUBTITLE,
             text_color=Colors.SECONDARY_TEXT,
         )
         subtitle.pack(pady=(Spacing.SM, 0))
 
-        # ---- Divider ----
-        divider = ctk.CTkFrame(self, fg_color=Colors.BORDER, height=1)
-        divider.pack(fill="x", padx=Spacing.XXXL, pady=Spacing.XL)
-
-        # ---- Experiment Selection ----
+        # ---- Experiment Selection Grid ----
         select_label = ctk.CTkLabel(
-            self,
-            text="Select an Experiment:",
+            main_container,
+            text="Select an Experiment",
             font=Typography.SECTION_TITLE,
             text_color=Colors.PRIMARY_TEXT,
         )
-        select_label.pack(pady=(Spacing.LG, Spacing.XL))
+        select_label.pack(pady=(Spacing.XXL, Spacing.LG))
+
+        # Grid container for experiment cards
+        grid_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        grid_frame.pack(pady=Spacing.XL)
 
         self.experiment_var = ctk.StringVar(value="nacl_exp.json")
 
@@ -59,61 +64,75 @@ class StartScreen(ctk.CTkFrame):
             ("🔬  Estimation of Copper from E-waste", "exp.txt", "Medium • ~45 min"),
         ]
 
-        for exp_name, exp_file, difficulty in experiments:
-            exp_frame = ctk.CTkFrame(
-                self,
-                fg_color=Colors.SECONDARY_BG,
-                border_color=Colors.BORDER,
-                border_width=1,
-                corner_radius=BorderRadius.LARGE,
-            )
-            exp_frame.pack(fill="x", padx=Spacing.XXXL, pady=Spacing.SM)
+        # Create 2x2 grid of experiment cards
+        for i, (exp_name, exp_file, difficulty) in enumerate(experiments):
+            row = i // 2
+            col = i % 2
 
+            # Experiment card - large and outlined
+            exp_card = ctk.CTkFrame(
+                grid_frame,
+                **ThemeConfig.get_experiment_card_style(),
+                width=280,
+                height=120,
+            )
+            exp_card.grid(row=row, column=col, padx=Spacing.LG, pady=Spacing.LG)
+            exp_card.pack_propagate(False)  # Maintain fixed size
+
+            # Radio button inside card
             radio = ctk.CTkRadioButton(
-                exp_frame,
-                text=exp_name,
+                exp_card,
+                text="",
                 variable=self.experiment_var,
                 value=exp_file,
-                font=Typography.SUBTITLE,
-                text_color=Colors.PRIMARY_TEXT,
-                radiobutton_width=22,
-                radiobutton_height=22,
+                radiobutton_width=24,
+                radiobutton_height=24,
                 border_width_unchecked=2,
                 border_width_checked=2,
                 fg_color=Colors.ACTIVE_GLOW,
+                command=lambda f=exp_file: self._on_experiment_selected(f),
             )
-            radio.pack(side="left", padx=Spacing.XL, pady=Spacing.LG)
+            radio.pack(anchor="nw", padx=Spacing.LG, pady=Spacing.LG)
 
+            # Experiment name
+            name_label = ctk.CTkLabel(
+                exp_card,
+                text=exp_name,
+                font=Typography.BODY_BOLD,
+                text_color=Colors.PRIMARY_TEXT,
+                wraplength=220,
+                justify="left",
+            )
+            name_label.pack(anchor="w", padx=Spacing.LG, pady=(Spacing.SM, 0))
+
+            # Difficulty and duration
             diff_label = ctk.CTkLabel(
-                exp_frame,
+                exp_card,
                 text=difficulty,
                 font=Typography.SMALL,
                 text_color=Colors.TERTIARY_TEXT,
             )
-            diff_label.pack(side="right", padx=Spacing.XL, pady=Spacing.LG)
+            diff_label.pack(anchor="sw", padx=Spacing.LG, pady=Spacing.LG)
 
         # ---- Start Button ----
         self.start_btn = ctk.CTkButton(
-            self,
-            text="Start Lab Session  →",
+            main_container,
+            text="Start Lab Session",
             font=Typography.SECTION_TITLE,
             height=Spacing.XXXL,
-            corner_radius=BorderRadius.LARGE,
-            fg_color=Colors.BUTTON_PRIMARY_BG,
-            hover_color=get_hover_color(Colors.BUTTON_PRIMARY_BG, lighten=False),
-            text_color=Colors.BUTTON_PRIMARY_TEXT,
+            **ThemeConfig.get_button_style("primary"),
             command=self._start,
         )
-        self.start_btn.pack(pady=Spacing.XXXL, padx=Spacing.XXXL)
+        self.start_btn.pack(pady=(Spacing.XXL, Spacing.XXXL), padx=Spacing.XXXL)
 
         # ---- Footer ----
         footer = ctk.CTkLabel(
-            self,
-            text="Powered by Groq AI  •  Piper TTS  •  OpenCV",
-            font=ctk.CTkFont(size=11),
-            text_color="#4B5563",
+            main_container,
+            text="Powered by Groq AI • Piper TTS • OpenCV",
+            font=Typography.EXTRA_SMALL,
+            text_color=Colors.TERTIARY_TEXT,
         )
-        footer.pack(side="bottom", pady=10)
+        footer.pack(side="bottom", pady=Spacing.XL)
 
     def _start(self):
         exp_file = self.experiment_var.get()
