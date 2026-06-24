@@ -1,1 +1,0 @@
-# SenseBridge Computer Vision

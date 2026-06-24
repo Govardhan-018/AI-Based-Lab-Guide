@@ -25,19 +25,23 @@ MANIFEST
 # Virtual environments
 venv/
 env/
-.env/
 .venv/
 env.bak/
 venv.bak/
 
-# App-specific runtime files
-temp.wav
+# SenseBridge runtime files
+sensebridge/temp.wav
+sensebridge/easyocr_models/
+sensebridge/*.onnx
+sensebridge/*.onnx.json
+sensebridge/voice.tar.gz
 
-# Downloaded AI Models & Artifacts
-easyocr_models/
-*.onnx
-*.onnx.json
-voice.tar.gz
+# LabPilot
+labpilot/node_modules/
+labpilot/.next/
+
+# Archive (old mockups, not needed in git)
+archive/
 
 # IDE / Editor
 .vscode/
@@ -45,4 +49,7 @@ voice.tar.gz
 *.swp
 *.swo
 .DS_Store
+
+# Environment (secrets)
 .env
+sensebridge/.env

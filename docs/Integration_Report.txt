@@ -1,0 +1,55 @@
+INTEGRATION REPORT: SENSEBRIDGE & LABPILOT
+
+1. OVERVIEW OF THE TWO SYSTEMS
+--------------------------------------------------
+After analyzing the directory, here is the breakdown of the two distinct systems present in the folder:
+
+A) SenseBridge (Root Directory)
+- Type: Python Desktop Application (CustomTkinter GUI)
+- Purpose: A local AI chemistry tutor that students run on their lab stations. 
+- Capabilities: 
+  * Real-time Computer Vision (OpenCV) and OCR (EasyOCR) via a webcam to monitor experiments.
+  * Audio interactions using Whisper (Speech-to-Text), LLMs (Groq Llama-3), and Piper (Text-to-Speech).
+  * Executes `.json` experiment scripts step-by-step.
+
+B) LabPilot (/labpilot directory)
+- Type: Next.js Web Application
+- Purpose: A centralized "AI Laboratory Learning OS" for the broader institution.
+- Capabilities:
+  * Dashboards for three roles: Student (track progress), Lab Instructor (monitor live sessions), and Teacher (manage curriculum/analytics).
+
+2. HOW TO INTEGRATE THEM
+--------------------------------------------------
+Currently, SenseBridge runs independently on a local machine, while LabPilot is a web platform. To integrate them, SenseBridge must become the "edge client" that streams data to LabPilot's centralized "cloud/backend".
+
+Here is the step-by-step technical architecture for integration:
+
+Step 1: Implement a Centralized Backend / Database
+- Action: Set up a database (e.g., PostgreSQL or Firebase) connected to LabPilot.
+- Why: LabPilot needs a place to store student profiles, experiment templates, and live session data.
+
+Step 2: Add an API/WebSocket Layer to LabPilot
+- Action: Create Next.js API routes (REST) or set up a WebSocket server (e.g., Socket.io or native WebSockets) within LabPilot.
+- Why: SenseBridge needs endpoints to push real-time data to LabPilot.
+
+Step 3: Modify SenseBridge's State Management
+- Action: Inside SenseBridge (`core/experiment_manager.py` and `core/session_manager.py`), add HTTP requests (using the Python `requests` library) or a WebSocket client (using `websockets` or `socketio-client`).
+- Data to send from SenseBridge to LabPilot:
+  * Session Start/End events.
+  * Step progression (e.g., "Student just completed step 3").
+  * Safety alerts (e.g., "CV detected spilled liquid").
+  * Chat logs (transcripts of student questions and AI answers).
+
+Step 4: Authenticate Users
+- Action: When a student launches SenseBridge, add a login screen or prompt them to enter a LabPilot session code.
+- Why: This links the local desktop session to the specific student's LabPilot account, allowing the Teacher dashboard to track their XP and progress.
+
+Step 5: Live Instructor Dashboard in LabPilot
+- Action: In the LabPilot Next.js app (under `/instructor`), build a live monitoring dashboard.
+- Why: Instructors can use this page to listen to WebSocket events from all active SenseBridge clients in the lab. If a student is stuck on a step for too long, the instructor's dashboard lights up with an alert.
+
+3. SUMMARY
+--------------------------------------------------
+- SenseBridge = Local hardware-interfacing client (Eyes and Ears).
+- LabPilot = Cloud management and analytics platform (Brain and Dashboard).
+Integration requires adding a networking layer (REST APIs or WebSockets) so the local Python app can constantly report its state to the Next.js web application.
